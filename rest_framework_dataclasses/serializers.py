@@ -22,6 +22,8 @@ from rest_framework_dataclasses import fields, field_utils, typing_utils
 from rest_framework_dataclasses.field_utils import get_dataclass_definition, DataclassDefinition, TypeInfo
 from rest_framework_dataclasses.types import Dataclass
 
+from .fields import FrozenSetField, SetField
+
 
 # Define some types to make type hinting more readable
 KWArgs = Dict[str, Any]
@@ -49,6 +51,7 @@ def _strip_empty_sentinels(data: AnyT, instance: Optional[AnyT] = None) -> AnyT:
     elif isinstance(data, dict):
         return cast(AnyT, {key: _strip_empty_sentinels(value) for key, value in data.items()})
     return data
+
 
 
 # noinspection PyMethodMayBeStatic
@@ -80,7 +83,9 @@ class DataclassSerializer(rest_framework.serializers.Serializer, Generic[T]):
         datetime.timedelta: rest_framework.fields.DurationField,
         uuid.UUID:          rest_framework.fields.UUIDField,
         dict:               rest_framework.fields.DictField,
-        list:               rest_framework.fields.ListField
+        list:               rest_framework.fields.ListField,
+        set:                SetField,
+        frozenset:          FrozenSetField,
     }
     serializer_related_field: Type[SerializerField] = PrimaryKeyRelatedField
 
@@ -420,6 +425,10 @@ class DataclassSerializer(rest_framework.serializers.Serializer, Generic[T]):
         # Lookup the types from the field mapping, so that it can easily be changed without overriding the method.
         if type_info.is_mapping:
             field_class = self.serializer_field_mapping[dict]
+        elif type_info.is_set and type_info.is_frozen:
+            field_class = self.serializer_field_mapping[frozenset]
+        elif type_info.is_set:
+            field_class = self.serializer_field_mapping[set]
         else:
             field_class = self.serializer_field_mapping[list]
 

@@ -25,6 +25,8 @@ class DataclassDefinition(Generic[T]):
 class TypeInfo:
     is_many: bool
     is_mapping: bool
+    is_set: bool
+    is_frozen: bool
     is_final: bool
     is_nullable: bool
     base_type: type
@@ -61,6 +63,8 @@ def get_type_info(tp: type) -> TypeInfo:
 
     is_mapping = typing_utils.is_mapping_type(tp)
     is_many = typing_utils.is_iterable_type(tp)
+    is_set = typing_utils.is_set_type(tp)
+    is_frozen = typing_utils.is_frozen_type(tp)
 
     if is_mapping:
         tp = typing_utils.get_mapping_value_type(tp)
@@ -70,7 +74,15 @@ def get_type_info(tp: type) -> TypeInfo:
     if typing_utils.is_type_variable(tp):
         tp = typing_utils.get_variable_type_substitute(tp)
 
-    return TypeInfo(is_many, is_mapping, is_final, is_nullable, tp)
+    return TypeInfo(
+        is_many=is_many,
+        is_mapping=is_mapping,
+        is_set=is_set,
+        is_frozen=is_frozen,
+        is_final=is_final,
+        is_nullable=is_nullable,
+        base_type=tp,
+    )
 
 
 def get_relation_info(type_info: TypeInfo) -> RelationInfo:

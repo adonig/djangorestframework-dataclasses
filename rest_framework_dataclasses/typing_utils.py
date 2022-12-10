@@ -99,6 +99,44 @@ def is_iterable_type(tp: type) -> bool:
         issubclass(origin, collections.abc.Iterable)
     )
 
+def is_set_type(tp: type) -> bool:
+    """
+    Test if the given type is a set.
+
+    Some examples of set type hints are:
+
+        Set[int]
+        FrozenSet[str]
+
+    """
+    # Sets are a generic with an origin that is a subclass of Set.
+    origin = get_origin(tp)
+    return (
+        origin is not None and
+        isinstance(origin, type) and
+        issubclass(origin, collections.abc.Set)
+    )
+
+def is_frozen_type(tp: type) -> bool:
+    """
+    Test if the given type is frozen.
+
+    Some examples of frozen type hints are:
+
+        FrozenMap[str, int] (might come with PEP 603)
+        FrozenSet[str]
+
+    """
+    # Sets are a generic with an origin that is a subclass of Set.
+    origin = get_origin(tp)
+    if origin is None or not isinstance(origin, type):
+        return False
+    if issubclass(origin, collections.abc.Set):
+        return not issubclass(origin, collections.abc.MutableSet)
+    if issubclass(origin, collections.abc.Mapping):
+        return not issubclass(origin, collections.abc.MutableMapping)
+    return False
+
 
 def get_iterable_element_type(tp: type) -> type:
     """

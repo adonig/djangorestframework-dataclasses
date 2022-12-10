@@ -1,4 +1,6 @@
-from rest_framework.fields import DecimalField, ChoiceField
+from collections.abc import Mapping
+from django.utils.translation import gettext_lazy as _
+from rest_framework.fields import DecimalField, ChoiceField, ListField
 
 
 class DefaultDecimalField(DecimalField):
@@ -42,3 +44,35 @@ class EnumField(ChoiceField):
             return value.name
         else:
             return value.value
+
+
+class FrozenSetField(ListField):
+    default_error_messages = {
+        'not_a_frozenset': _('Expected a frozenset of items but got type "{input_type}".'),
+        'empty': _('This set may not be empty.'),
+        'min_length': _('Ensure this field has at least {min_length} elements.'),
+        'max_length': _('Ensure this field has no more than {max_length} elements.')
+    }
+
+    def to_representation(self, value):
+        return list(value)
+
+    def to_internal_value(self, data):
+        return frozenset(data)
+
+
+class SetField(ListField):
+    default_error_messages = {
+        'not_a_set': _('Expected a set of items but got type "{input_type}".'),
+        'empty': _('This set may not be empty.'),
+        'min_length': _('Ensure this field has at least {min_length} elements.'),
+        'max_length': _('Ensure this field has no more than {max_length} elements.')
+    }
+
+    def to_representation(self, value):
+        return list(value)
+
+    def to_internal_value(self, data):
+        if isinstance(data, (str, Mapping)) or not hasattr(data, '__iter__'):
+            self.fail('not_a_set', input_type=type(data).__name__)
+        return set(super(SetField, self).to_internal_value(self, data))
